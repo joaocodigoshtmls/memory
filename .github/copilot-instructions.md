@@ -42,6 +42,7 @@ src/
   store/           # Zustand state management
   types/           # TypeScript type definitions
 ```
+
 # Neuro Memory Trainer - Project Setup
 
 ## Completed Setup Steps
