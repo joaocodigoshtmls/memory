@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { CardData, GameSnapshot, GameStatus, LevelConfig } from '@/types/memory';
+import { generateDeck } from '@/lib/deckGenerator';
 
 type ModalState = {
   isOpen: boolean;
@@ -32,40 +33,6 @@ const defaultModal: ModalState = {
   variant: null
 };
 
-const generatePlaceholderDeck = (config: LevelConfig): CardData[] => {
-  return Array.from({ length: config.cardPairs }, (_, pairIndex) => {
-    const pairId = `${config.id}-pair-${pairIndex}`;
-    const baseCard: CardData = {
-      id: `${pairId}-a`,
-      value: `Stimulus ${pairIndex + 1}`,
-      pairId,
-      category: config.difficultyHooks.includes('categorical-grouping')
-        ? `category-${pairIndex % 4}`
-        : 'neutral',
-      metadata: {
-        cues: {
-          // Future: bind mnemonic cues, e.g., loci imagery or rhymes.
-          mnemonicStrategy: config.difficultyHooks.includes('mnemonic-cue')
-            ? 'placeholder-mnemonic'
-            : undefined,
-          visualHint: config.difficultyHooks.includes('loci-environment')
-            ? 'placeholder-visual-loci'
-            : undefined
-        },
-        tags: ['concept'],
-        rehearsalHistory: []
-      }
-    };
-
-    const mirroredCard: CardData = {
-      ...baseCard,
-      id: `${pairId}-b`
-    };
-
-    return [baseCard, mirroredCard];
-  }).flat();
-};
-
 type SetState<TState> = (
   partial: TState | Partial<TState> | ((state: TState) => TState | Partial<TState>),
   replace?: boolean
@@ -75,21 +42,14 @@ type GetState<TState> = () => TState;
 
 const createGameStore = (set: SetState<GameStore>, get: GetState<GameStore>): GameStore => ({
   ...initialSnapshot,
-  deck: generatePlaceholderDeck({
-    id: initialSnapshot.levelId,
-    name: 'Placeholder',
-    description: 'Placeholder',
-    cardPairs: 8,
-    difficultyHooks: ['mnemonic-cue'],
-    objectives: ['placeholder']
-  }),
+  deck: generateDeck(initialSnapshot.levelId),
   modal: defaultModal,
   initializeLevel: (config: LevelConfig) => {
-    const placeholderDeck = generatePlaceholderDeck(config);
+    const deck = generateDeck(config.id);
 
     set({
       levelId: config.id,
-      deck: placeholderDeck,
+      deck,
       revealedCardIds: [],
       matchedPairs: new Set<string>(),
       moves: 0,
@@ -117,12 +77,15 @@ const createGameStore = (set: SetState<GameStore>, get: GetState<GameStore>): Ga
       moves: moves + 1
     });
   },
-  reset: () =>
+  reset: () => {
+    const { levelId } = get();
     set({
-    ...initialSnapshot,
-    deck: get().deck,
-    modal: defaultModal
-    })
+      ...initialSnapshot,
+      levelId,
+      deck: generateDeck(levelId),
+      modal: defaultModal
+    });
+  }
 });
 
 export const useGameStore = create<GameStore>(createGameStore);

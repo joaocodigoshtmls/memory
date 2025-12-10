@@ -17,6 +17,14 @@
 				"/c",
 				"npm install"
 			]
+		},
+		{
+			"label": "git pull",
+			"type": "shell",
+			"command": "git",
+			"args": [
+				"pull"
+			]
 		}
 	]
 }
