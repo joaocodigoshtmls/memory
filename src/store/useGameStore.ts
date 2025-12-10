@@ -36,13 +36,13 @@ const defaultModal: ModalState = {
 /**
  * Generates a placeholder deck for testing and development purposes.
  * This is a temporary implementation that creates simple stimulus cards.
- * 
+ *
  * @todo Replace with actual content-based deck generator that uses:
  * - Scientific concepts for cognitive training
  * - Real mnemonic cues and visual hints
  * - Proper spaced repetition metadata
  * - Category-based grouping with meaningful content
- * 
+ *
  * @param config - Level configuration specifying card pairs and difficulty hooks
  * @returns Array of CardData representing the shuffled deck
  */
@@ -134,19 +134,17 @@ const createGameStore = (
       moves: moves + 1,
     });
   },
-  reset: () =>
+  reset: () => {
     // Preserves current deck to allow replay of the same card positions.
     // For a fresh shuffle, call initializeLevel() instead.
+    const { levelId, deck } = get();
     set({
       ...initialSnapshot,
       levelId,
-      deck: generateDeck(levelId),
+      deck,
       modal: defaultModal,
     });
   },
-      deck: get().deck,
-      modal: defaultModal,
-    }),
 });
 
 export const useGameStore = create<GameStore>(createGameStore);

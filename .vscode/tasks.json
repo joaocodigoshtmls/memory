@@ -26,6 +26,8 @@
       "script": "lint",
       "problemMatcher": ["$eslint-stylish"],
       "detail": "Run ESLint on the project"
+    },
+    {
       "label": "npm install",
       "type": "shell",
       "command": "npm",
