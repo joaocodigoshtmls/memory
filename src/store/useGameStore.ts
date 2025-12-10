@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import type { CardData, GameSnapshot, GameStatus, LevelConfig } from '@/types/memory';
 import { generateDeck } from '@/lib/deckGenerator';
 
+/**
+ * Duration in milliseconds to display mismatched cards before hiding them.
+ * This allows users to memorize the card positions.
+ */
+const MISMATCH_DISPLAY_DURATION = 1200;
+
 type ModalState = {
   isOpen: boolean;
   variant: 'pause' | 'summary' | 'onboarding' | null;
@@ -11,11 +17,14 @@ type ModalState = {
 type GameStore = GameSnapshot & {
   deck: CardData[];
   modal: ModalState;
+  selectedCards: string[];
+  isChecking: boolean;
+  checkTimeoutId: NodeJS.Timeout | null;
   initializeLevel: (config: LevelConfig) => void;
   setStatus: (status: GameStatus) => void;
   setModal: (modal: ModalState) => void;
-  recordReveal: (cardId: string) => void;
-  recordMatch: (pairId: string) => void;
+  selectCard: (cardId: string) => void;
+  clearSelection: () => void;
   reset: () => void;
 };
 
@@ -101,7 +110,17 @@ const createGameStore = (
     objectives: ['placeholder'],
   }),
   modal: defaultModal,
+  selectedCards: [],
+  isChecking: false,
+  checkTimeoutId: null,
   initializeLevel: (config: LevelConfig) => {
+    const { checkTimeoutId } = get();
+    
+    // Clear any existing timeout to prevent memory leaks
+    if (checkTimeoutId) {
+      clearTimeout(checkTimeoutId);
+    }
+
     const deck = generateDeck(config.id);
 
     set({
@@ -112,41 +131,99 @@ const createGameStore = (
       moves: 0,
       elapsedSeconds: 0,
       status: 'countdown',
+      selectedCards: [],
+      isChecking: false,
+      checkTimeoutId: null,
     });
   },
   setStatus: (status: GameStatus) => set({ status }),
   setModal: (modal: ModalState) => set({ modal }),
-  recordReveal: (cardId: string) => {
-    const { revealedCardIds } = get();
-    set({
-      revealedCardIds: revealedCardIds.includes(cardId)
-        ? revealedCardIds
-        : [...revealedCardIds, cardId],
-    });
-  },
-  recordMatch: (pairId: string) => {
-    const { matchedPairs, moves } = get();
-    const nextMatches = new Set(matchedPairs);
-    nextMatches.add(pairId);
+  selectCard: (cardId: string) => {
+    const { selectedCards, isChecking, deck, matchedPairs, moves, checkTimeoutId } = get();
+    
+    // Prevent selection during checking or if already selected
+    if (isChecking || selectedCards.includes(cardId)) {
+      return;
+    }
 
+    const newSelectedCards = [...selectedCards, cardId];
+    
+    // Update revealed cards to show the newly selected card
     set({
-      matchedPairs: nextMatches,
-      moves: moves + 1,
+      selectedCards: newSelectedCards,
+      revealedCardIds: newSelectedCards,
+    });
+
+    // If two cards are now selected, check for a match
+    if (newSelectedCards.length === 2) {
+      set({ isChecking: true });
+
+      const [firstCardId, secondCardId] = newSelectedCards;
+      const firstCard = deck.find((card) => card.id === firstCardId);
+      const secondCard = deck.find((card) => card.id === secondCardId);
+
+      if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
+        // Match found - mark as matched immediately
+        const nextMatches = new Set(matchedPairs);
+        nextMatches.add(firstCard.pairId);
+
+        set({
+          matchedPairs: nextMatches,
+          moves: moves + 1,
+          selectedCards: [],
+          isChecking: false,
+          checkTimeoutId: null,
+        });
+      } else {
+        // No match - show cards briefly then hide them
+        const timeoutId = setTimeout(() => {
+          set({
+            revealedCardIds: [],
+            selectedCards: [],
+            moves: moves + 1,
+            isChecking: false,
+            checkTimeoutId: null,
+          });
+        }, MISMATCH_DISPLAY_DURATION);
+        
+        set({ checkTimeoutId: timeoutId });
+      }
+    }
+  },
+  clearSelection: () => {
+    const { checkTimeoutId } = get();
+    
+    // Clear any existing timeout
+    if (checkTimeoutId) {
+      clearTimeout(checkTimeoutId);
+    }
+    
+    set({
+      selectedCards: [],
+      revealedCardIds: [],
+      checkTimeoutId: null,
     });
   },
-  reset: () =>
-    // Preserves current deck to allow replay of the same card positions.
-    // For a fresh shuffle, call initializeLevel() instead.
+  reset: () => {
+    // Resets game state while generating a fresh shuffled deck.
+    // This allows players to retry the level with a new card layout.
+    const { levelId, checkTimeoutId } = get();
+    
+    // Clear any existing timeout to prevent memory leaks
+    if (checkTimeoutId) {
+      clearTimeout(checkTimeoutId);
+    }
+    
     set({
       ...initialSnapshot,
       levelId,
       deck: generateDeck(levelId),
       modal: defaultModal,
+      selectedCards: [],
+      isChecking: false,
+      checkTimeoutId: null,
     });
   },
-      deck: get().deck,
-      modal: defaultModal,
-    }),
 });
 
 export const useGameStore = create<GameStore>(createGameStore);

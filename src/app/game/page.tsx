@@ -1,6 +1,5 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, Suspense } from 'react';
 import { Suspense, useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GameBoard } from '@/components/GameBoard';
@@ -9,6 +8,11 @@ import { Modal } from '@/components/Modal';
 import { levelsConfig } from '@/lib/levelsConfig';
 import { useGameStore } from '@/store/useGameStore';
 import type { CardData } from '@/types/memory';
+
+/**
+ * Duration in milliseconds for the countdown phase before game starts.
+ */
+const COUNTDOWN_DURATION = 2000;
 
 function GameContent() {
   const searchParams = useSearchParams();
@@ -25,30 +29,39 @@ function GameContent() {
   const elapsedSeconds = useGameStore((state) => state.elapsedSeconds);
   const status = useGameStore((state) => state.status);
   const modal = useGameStore((state) => state.modal);
+  const isChecking = useGameStore((state) => state.isChecking);
   const initializeLevel = useGameStore((state) => state.initializeLevel);
   const setStatus = useGameStore((state) => state.setStatus);
   const setModal = useGameStore((state) => state.setModal);
-  const recordReveal = useGameStore((state) => state.recordReveal);
-  const recordMatch = useGameStore((state) => state.recordMatch);
+  const selectCard = useGameStore((state) => state.selectCard);
 
   useEffect(() => {
     initializeLevel(level);
     // Future: wire countdown, spaced repetition scheduler, and loci environment bootstrap here.
   }, [initializeLevel, level]);
 
+  useEffect(() => {
+    // Transition from countdown to in-progress after a brief delay
+    if (status === 'countdown') {
+      const timer = setTimeout(() => {
+        setStatus('in-progress');
+      }, COUNTDOWN_DURATION);
+
+      return () => clearTimeout(timer);
+    }
+  }, [status, setStatus]);
+
   const handleCardSelect = useCallback(
     (card: CardData) => {
-      recordReveal(card.id);
-      // Future: plug adaptive difficulty and cue suggestions before matching evaluation.
-
-      const matchingCard = deck.find(
-        (candidate) => candidate.id !== card.id && candidate.pairId === card.pairId
-      );
-      if (matchingCard && revealedCardIds.includes(matchingCard.id)) {
-        recordMatch(card.pairId);
+      // Prevent card selection during checking or when game is not in progress
+      if (isChecking || status !== 'in-progress') {
+        return;
       }
+      
+      selectCard(card.id);
+      // Future: plug adaptive difficulty and cue suggestions before matching evaluation.
     },
-    [deck, recordMatch, recordReveal, revealedCardIds]
+    [selectCard, isChecking, status]
   );
 
   const handlePauseToggle = () => {
@@ -126,8 +139,6 @@ export default function GamePage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center text-white">
-          Carregando...
         <div className="flex min-h-screen items-center justify-center">
           <p className="text-white">Carregando...</p>
         </div>
