@@ -1,22 +1,17 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "npm install",
-			"type": "shell",
-			"command": "npm",
-			"args": [
-				"install"
-			]
-		},
-		{
-			"label": "npm install",
-			"type": "shell",
-			"command": "cmd",
-			"args": [
-				"/c",
-				"npm install"
-			]
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm install",
+      "type": "shell",
+      "command": "npm",
+      "args": ["install"]
+    },
+    {
+      "label": "npm install",
+      "type": "shell",
+      "command": "cmd",
+      "args": ["/c", "npm install"]
+    }
+  ]
 }

@@ -9,7 +9,12 @@ type GameBoardProps = {
   onCardSelect: (card: CardData) => void;
 };
 
-export function GameBoard({ deck, revealedCardIds, matchedPairs, onCardSelect }: GameBoardProps) {
+export function GameBoard({
+  deck,
+  revealedCardIds,
+  matchedPairs,
+  onCardSelect,
+}: GameBoardProps) {
   const gridColumns = useMemo(() => {
     const cardCount = deck.length;
     if (cardCount <= 16) return 'grid-cols-4';

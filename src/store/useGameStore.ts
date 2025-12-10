@@ -24,12 +24,12 @@ const initialSnapshot: GameSnapshot = {
   matchedPairs: new Set<string>(),
   moves: 0,
   elapsedSeconds: 0,
-  status: 'idle'
+  status: 'idle',
 };
 
 const defaultModal: ModalState = {
   isOpen: false,
-  variant: null
+  variant: null,
 };
 
 const generatePlaceholderDeck = (config: LevelConfig): CardData[] => {
@@ -50,16 +50,16 @@ const generatePlaceholderDeck = (config: LevelConfig): CardData[] => {
             : undefined,
           visualHint: config.difficultyHooks.includes('loci-environment')
             ? 'placeholder-visual-loci'
-            : undefined
+            : undefined,
         },
         tags: ['concept'],
-        rehearsalHistory: []
-      }
+        rehearsalHistory: [],
+      },
     };
 
     const mirroredCard: CardData = {
       ...baseCard,
-      id: `${pairId}-b`
+      id: `${pairId}-b`,
     };
 
     return [baseCard, mirroredCard];
@@ -73,7 +73,10 @@ type SetState<TState> = (
 
 type GetState<TState> = () => TState;
 
-const createGameStore = (set: SetState<GameStore>, get: GetState<GameStore>): GameStore => ({
+const createGameStore = (
+  set: SetState<GameStore>,
+  get: GetState<GameStore>
+): GameStore => ({
   ...initialSnapshot,
   deck: generatePlaceholderDeck({
     id: initialSnapshot.levelId,
@@ -81,7 +84,7 @@ const createGameStore = (set: SetState<GameStore>, get: GetState<GameStore>): Ga
     description: 'Placeholder',
     cardPairs: 8,
     difficultyHooks: ['mnemonic-cue'],
-    objectives: ['placeholder']
+    objectives: ['placeholder'],
   }),
   modal: defaultModal,
   initializeLevel: (config: LevelConfig) => {
@@ -94,7 +97,7 @@ const createGameStore = (set: SetState<GameStore>, get: GetState<GameStore>): Ga
       matchedPairs: new Set<string>(),
       moves: 0,
       elapsedSeconds: 0,
-      status: 'countdown'
+      status: 'countdown',
     });
   },
   setStatus: (status: GameStatus) => set({ status }),
@@ -104,7 +107,7 @@ const createGameStore = (set: SetState<GameStore>, get: GetState<GameStore>): Ga
     set({
       revealedCardIds: revealedCardIds.includes(cardId)
         ? revealedCardIds
-        : [...revealedCardIds, cardId]
+        : [...revealedCardIds, cardId],
     });
   },
   recordMatch: (pairId: string) => {
@@ -114,15 +117,15 @@ const createGameStore = (set: SetState<GameStore>, get: GetState<GameStore>): Ga
 
     set({
       matchedPairs: nextMatches,
-      moves: moves + 1
+      moves: moves + 1,
     });
   },
   reset: () =>
     set({
-    ...initialSnapshot,
-    deck: get().deck,
-    modal: defaultModal
-    })
+      ...initialSnapshot,
+      deck: get().deck,
+      modal: defaultModal,
+    }),
 });
 
 export const useGameStore = create<GameStore>(createGameStore);
