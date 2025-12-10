@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import type { CardData, GameSnapshot, GameStatus, LevelConfig } from '@/types/memory';
 import { generateDeck } from '@/lib/deckGenerator';
 
+/**
+ * Duration in milliseconds to display mismatched cards before hiding them.
+ * This allows users to memorize the card positions.
+ */
+const MISMATCH_DISPLAY_DURATION = 1200;
+
 type ModalState = {
   isOpen: boolean;
   variant: 'pause' | 'summary' | 'onboarding' | null;
@@ -178,7 +184,7 @@ const createGameStore = (
             isChecking: false,
             checkTimeoutId: null,
           });
-        }, 1200); // 1.2 second delay to allow visualization
+        }, MISMATCH_DISPLAY_DURATION);
         
         set({ checkTimeoutId: timeoutId });
       }
@@ -199,8 +205,8 @@ const createGameStore = (
     });
   },
   reset: () => {
-    // Preserves current deck to allow replay of the same card positions.
-    // For a fresh shuffle, call initializeLevel() instead.
+    // Resets game state while generating a fresh shuffled deck.
+    // This allows players to retry the level with a new card layout.
     const { levelId, checkTimeoutId } = get();
     
     // Clear any existing timeout to prevent memory leaks

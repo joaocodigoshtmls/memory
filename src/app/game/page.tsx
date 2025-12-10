@@ -9,6 +9,11 @@ import { levelsConfig } from '@/lib/levelsConfig';
 import { useGameStore } from '@/store/useGameStore';
 import type { CardData } from '@/types/memory';
 
+/**
+ * Duration in milliseconds for the countdown phase before game starts.
+ */
+const COUNTDOWN_DURATION = 2000;
+
 function GameContent() {
   const searchParams = useSearchParams();
   const requestedLevelId = searchParams.get('level');
@@ -40,7 +45,7 @@ function GameContent() {
     if (status === 'countdown') {
       const timer = setTimeout(() => {
         setStatus('in-progress');
-      }, 2000); // 2 second countdown
+      }, COUNTDOWN_DURATION);
 
       return () => clearTimeout(timer);
     }
