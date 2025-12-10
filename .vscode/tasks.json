@@ -2,22 +2,30 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "npm install",
-      "type": "shell",
-      "command": "npm",
-      "args": ["install"]
+      "label": "dev",
+      "type": "npm",
+      "script": "dev",
+      "problemMatcher": [],
+      "detail": "Start Next.js development server",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
     },
     {
-      "label": "npm install",
-      "type": "shell",
-      "command": "cmd",
-      "args": ["/c", "npm install"]
+      "label": "build",
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": [],
+      "detail": "Build the Next.js project for production"
     },
     {
-      "label": "git pull",
-      "type": "shell",
-      "command": "git",
-      "args": ["pull"]
+      "label": "lint",
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": ["$eslint-stylish"],
+      "detail": "Run ESLint on the project"
     }
   ]
 }
