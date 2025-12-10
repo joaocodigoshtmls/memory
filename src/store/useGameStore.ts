@@ -33,6 +33,53 @@ const defaultModal: ModalState = {
   variant: null,
 };
 
+/**
+ * Generates a placeholder deck for testing and development purposes.
+ * This is a temporary implementation that creates simple stimulus cards.
+ * 
+ * @todo Replace with actual content-based deck generator that uses:
+ * - Scientific concepts for cognitive training
+ * - Real mnemonic cues and visual hints
+ * - Proper spaced repetition metadata
+ * - Category-based grouping with meaningful content
+ * 
+ * @param config - Level configuration specifying card pairs and difficulty hooks
+ * @returns Array of CardData representing the shuffled deck
+ */
+const generatePlaceholderDeck = (config: LevelConfig): CardData[] => {
+  return Array.from({ length: config.cardPairs }, (_, pairIndex) => {
+    const pairId = `${config.id}-pair-${pairIndex}`;
+    const baseCard: CardData = {
+      id: `${pairId}-a`,
+      value: `Stimulus ${pairIndex + 1}`,
+      pairId,
+      category: config.difficultyHooks.includes('categorical-grouping')
+        ? `category-${pairIndex % 4}`
+        : 'neutral',
+      metadata: {
+        cues: {
+          // Future: bind mnemonic cues, e.g., loci imagery or rhymes.
+          mnemonicStrategy: config.difficultyHooks.includes('mnemonic-cue')
+            ? 'placeholder-mnemonic'
+            : undefined,
+          visualHint: config.difficultyHooks.includes('loci-environment')
+            ? 'placeholder-visual-loci'
+            : undefined,
+        },
+        tags: ['concept'],
+        rehearsalHistory: [],
+      },
+    };
+
+    const mirroredCard: CardData = {
+      ...baseCard,
+      id: `${pairId}-b`,
+    };
+
+    return [baseCard, mirroredCard];
+  }).flat();
+};
+
 type SetState<TState> = (
   partial: TState | Partial<TState> | ((state: TState) => TState | Partial<TState>),
   replace?: boolean
@@ -45,7 +92,14 @@ const createGameStore = (
   get: GetState<GameStore>
 ): GameStore => ({
   ...initialSnapshot,
-  deck: generateDeck(initialSnapshot.levelId),
+  deck: generatePlaceholderDeck({
+    id: initialSnapshot.levelId,
+    name: 'Placeholder',
+    description: 'Placeholder',
+    cardPairs: 8,
+    difficultyHooks: ['mnemonic-cue'],
+    objectives: ['placeholder'],
+  }),
   modal: defaultModal,
   initializeLevel: (config: LevelConfig) => {
     const deck = generateDeck(config.id);
@@ -80,8 +134,9 @@ const createGameStore = (
       moves: moves + 1,
     });
   },
-  reset: () => {
-    const { levelId } = get();
+  reset: () =>
+    // Preserves current deck to allow replay of the same card positions.
+    // For a fresh shuffle, call initializeLevel() instead.
     set({
       ...initialSnapshot,
       levelId,
@@ -89,6 +144,9 @@ const createGameStore = (
       modal: defaultModal,
     });
   },
+      deck: get().deck,
+      modal: defaultModal,
+    }),
 });
 
 export const useGameStore = create<GameStore>(createGameStore);
