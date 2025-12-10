@@ -15,6 +15,7 @@ type GameStore = GameSnapshot & {
   setModal: (modal: ModalState) => void;
   recordReveal: (cardId: string) => void;
   recordMatch: (pairId: string) => void;
+  clearRevealed: () => void;
   reset: () => void;
 };
 
@@ -116,6 +117,9 @@ const createGameStore = (set: SetState<GameStore>, get: GetState<GameStore>): Ga
       matchedPairs: nextMatches,
       moves: moves + 1
     });
+  },
+  clearRevealed: () => {
+    set({ revealedCardIds: [] });
   },
   reset: () =>
     set({

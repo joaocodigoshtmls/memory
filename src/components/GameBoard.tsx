@@ -6,10 +6,11 @@ type GameBoardProps = {
   deck: CardData[];
   revealedCardIds: string[];
   matchedPairs: Set<string>;
+  isLocked: boolean;
   onCardSelect: (card: CardData) => void;
 };
 
-export function GameBoard({ deck, revealedCardIds, matchedPairs, onCardSelect }: GameBoardProps) {
+export function GameBoard({ deck, revealedCardIds, matchedPairs, isLocked, onCardSelect }: GameBoardProps) {
   const gridColumns = useMemo(() => {
     const cardCount = deck.length;
     if (cardCount <= 16) return 'grid-cols-4';
@@ -25,6 +26,7 @@ export function GameBoard({ deck, revealedCardIds, matchedPairs, onCardSelect }:
           card={card}
           isMatched={matchedPairs.has(card.pairId)}
           isRevealed={revealedCardIds.includes(card.id)}
+          isLocked={isLocked}
           onSelect={onCardSelect}
         />
       ))}

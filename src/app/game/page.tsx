@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GameBoard } from '@/components/GameBoard';
 import { HUD } from '@/components/HUD';
@@ -9,7 +9,7 @@ import { levelsConfig } from '@/lib/levelsConfig';
 import { useGameStore } from '@/store/useGameStore';
 import type { CardData } from '@/types/memory';
 
-export default function GamePage() {
+function GameContent() {
   const searchParams = useSearchParams();
   const requestedLevelId = searchParams.get('level');
 
@@ -29,25 +29,57 @@ export default function GamePage() {
   const setModal = useGameStore((state) => state.setModal);
   const recordReveal = useGameStore((state) => state.recordReveal);
   const recordMatch = useGameStore((state) => state.recordMatch);
+  const clearRevealed = useGameStore((state) => state.clearRevealed);
+
+  // Local state to track when board is locked (2 cards revealed)
+  const [isLocked, setIsLocked] = useState(false);
 
   useEffect(() => {
     initializeLevel(level);
     // Future: wire countdown, spaced repetition scheduler, and loci environment bootstrap here.
   }, [initializeLevel, level]);
 
+  // Auto-hide mismatched cards after delay
+  useEffect(() => {
+    // Only process if exactly 2 cards are revealed and not already matched
+    if (revealedCardIds.length === 2) {
+      const [firstCardId, secondCardId] = revealedCardIds;
+      const firstCard = deck.find((c) => c.id === firstCardId);
+      const secondCard = deck.find((c) => c.id === secondCardId);
+
+      if (firstCard && secondCard) {
+        // Check if they match
+        if (firstCard.pairId === secondCard.pairId) {
+          // Match! Record it
+          recordMatch(firstCard.pairId);
+          // Clear revealed after a short delay to show the match
+          setTimeout(() => {
+            clearRevealed();
+            setIsLocked(false);
+          }, 600);
+        } else {
+          // No match - lock board and hide after delay
+          setIsLocked(true);
+          setTimeout(() => {
+            clearRevealed();
+            setIsLocked(false);
+          }, 1200);
+        }
+      }
+    }
+  }, [revealedCardIds, deck, recordMatch, clearRevealed]);
+
   const handleCardSelect = useCallback(
     (card: CardData) => {
+      // Don't allow selecting if board is locked or already 2 cards revealed
+      if (isLocked || revealedCardIds.length >= 2) {
+        return;
+      }
+      
       recordReveal(card.id);
       // Future: plug adaptive difficulty and cue suggestions before matching evaluation.
-
-      const matchingCard = deck.find(
-        (candidate) => candidate.id !== card.id && candidate.pairId === card.pairId
-      );
-      if (matchingCard && revealedCardIds.includes(matchingCard.id)) {
-        recordMatch(card.pairId);
-      }
     },
-    [deck, recordMatch, recordReveal, revealedCardIds]
+    [isLocked, recordReveal, revealedCardIds.length]
   );
 
   const handlePauseToggle = () => {
@@ -77,6 +109,7 @@ export default function GamePage() {
             matchedPairs={matchedPairs}
             onCardSelect={handleCardSelect}
             revealedCardIds={revealedCardIds}
+            isLocked={isLocked}
           />
         </div>
         <aside className="w-full max-w-sm space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6">
@@ -117,5 +150,13 @@ export default function GamePage() {
         {/* Future: embed spaced repetition schedule previews and loci environment snapshots here. */}
       </Modal>
     </main>
+  );
+}
+
+export default function GamePage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-white">Carregando...</div>}>
+      <GameContent />
+    </Suspense>
   );
 }
