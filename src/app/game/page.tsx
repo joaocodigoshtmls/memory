@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback, useEffect, useMemo, Suspense } from 'react';
 import { Suspense, useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GameBoard } from '@/components/GameBoard';
@@ -125,6 +126,8 @@ export default function GamePage() {
   return (
     <Suspense
       fallback={
+        <div className="flex min-h-screen items-center justify-center text-white">
+          Carregando...
         <div className="flex min-h-screen items-center justify-center">
           <p className="text-white">Carregando...</p>
         </div>

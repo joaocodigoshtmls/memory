@@ -139,6 +139,11 @@ const createGameStore = (
     // For a fresh shuffle, call initializeLevel() instead.
     set({
       ...initialSnapshot,
+      levelId,
+      deck: generateDeck(levelId),
+      modal: defaultModal,
+    });
+  },
       deck: get().deck,
       modal: defaultModal,
     }),
