@@ -4,7 +4,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Neuro Memory Trainer',
   description:
-    'Single-player memory training experience leveraging evidence-based cognitive techniques.'
+    'Single-player memory training experience leveraging evidence-based cognitive techniques.',
 };
 
 type RootLayoutProps = {

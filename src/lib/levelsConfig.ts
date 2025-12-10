@@ -9,7 +9,7 @@ export const levelsConfig: LevelConfig[] = [
     cardPairs: 8,
     baseTimeLimitSec: 180,
     difficultyHooks: ['mnemonic-cue'],
-    objectives: ['15 acertos', '0 dicas']
+    objectives: ['15 acertos', '0 dicas'],
   },
   {
     id: 'adaptive-loop',
@@ -19,16 +19,15 @@ export const levelsConfig: LevelConfig[] = [
     cardPairs: 12,
     baseTimeLimitSec: 210,
     difficultyHooks: ['spaced-repetition', 'categorical-grouping'],
-    objectives: ['18 acertos', '-10% tempo']
+    objectives: ['18 acertos', '-10% tempo'],
   },
   {
     id: 'loci-journey',
     name: 'Nível 3 · Jornada dos Loci',
-    description:
-      'Simula ambientes visuais para treino de memória espacial e narrativa.',
+    description: 'Simula ambientes visuais para treino de memória espacial e narrativa.',
     cardPairs: 16,
     baseTimeLimitSec: 240,
     difficultyHooks: ['loci-environment', 'adaptive-difficulty'],
-    objectives: ['Mapa completo', 'feedback em tempo real']
-  }
+    objectives: ['Mapa completo', 'feedback em tempo real'],
+  },
 ];

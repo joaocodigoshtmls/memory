@@ -20,7 +20,7 @@ export function Modal({
   description,
   primaryAction,
   secondaryAction,
-  children
+  children,
 }: ModalProps) {
   if (!isOpen) return null;
 
