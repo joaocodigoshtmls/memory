@@ -134,9 +134,10 @@ const createGameStore = (
       moves: moves + 1,
     });
   },
-  reset: () =>
+  reset: () => {
     // Preserves current deck to allow replay of the same card positions.
     // For a fresh shuffle, call initializeLevel() instead.
+    const { levelId } = get();
     set({
       ...initialSnapshot,
       levelId,
@@ -144,9 +145,6 @@ const createGameStore = (
       modal: defaultModal,
     });
   },
-      deck: get().deck,
-      modal: defaultModal,
-    }),
 });
 
 export const useGameStore = create<GameStore>(createGameStore);
