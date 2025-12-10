@@ -8,7 +8,13 @@ type HUDProps = {
   onPauseToggle: () => void;
 };
 
-export function HUD({ levelName, moves, elapsedSeconds, status, onPauseToggle }: HUDProps) {
+export function HUD({
+  levelName,
+  moves,
+  elapsedSeconds,
+  status,
+  onPauseToggle,
+}: HUDProps) {
   const minutes = Math.floor(elapsedSeconds / 60)
     .toString()
     .padStart(2, '0');
@@ -28,11 +34,15 @@ export function HUD({ levelName, moves, elapsedSeconds, status, onPauseToggle }:
       </div>
       <div>
         <p className="text-xs uppercase tracking-wide text-slate-400">Tempo</p>
-        <p className="text-lg font-semibold text-white">{minutes}:{seconds}</p>
+        <p className="text-lg font-semibold text-white">
+          {minutes}:{seconds}
+        </p>
       </div>
       <div>
         <p className="text-xs uppercase tracking-wide text-slate-400">Estado</p>
-        <p className="text-lg font-semibold capitalize text-white">{status.replace('-', ' ')}</p>
+        <p className="text-lg font-semibold capitalize text-white">
+          {status.replace('-', ' ')}
+        </p>
       </div>
       <button
         type="button"

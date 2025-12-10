@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo } from 'react';
+import { Suspense, useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GameBoard } from '@/components/GameBoard';
 import { HUD } from '@/components/HUD';
@@ -9,7 +9,7 @@ import { levelsConfig } from '@/lib/levelsConfig';
 import { useGameStore } from '@/store/useGameStore';
 import type { CardData } from '@/types/memory';
 
-export default function GamePage() {
+function GameContent() {
   const searchParams = useSearchParams();
   const requestedLevelId = searchParams.get('level');
 
@@ -56,7 +56,7 @@ export default function GamePage() {
     setModal({
       isOpen: nextStatus === 'paused',
       variant: nextStatus === 'paused' ? 'pause' : null,
-      payload: { levelId: level.id }
+      payload: { levelId: level.id },
     });
   };
 
@@ -82,8 +82,9 @@ export default function GamePage() {
         <aside className="w-full max-w-sm space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-lg font-semibold text-white">Missão cognitiva</h2>
           <p className="text-sm text-slate-300">
-            As próximas interações habilitarão dicas visuais, revisitações espaçadas e feedback
-            adaptativo. Utilize esta área para acompanhar insights personalizados.
+            As próximas interações habilitarão dicas visuais, revisitações espaçadas e
+            feedback adaptativo. Utilize esta área para acompanhar insights
+            personalizados.
           </p>
           <ul className="space-y-2 text-sm text-slate-200">
             {level.objectives.map((objective) => (
@@ -104,18 +105,32 @@ export default function GamePage() {
           onSelect: () => {
             setStatus('in-progress');
             setModal({ isOpen: false, variant: null });
-          }
+          },
         }}
         secondaryAction={{
           label: 'Voltar à seleção',
           onSelect: () => {
             setModal({ isOpen: false, variant: null });
-          }
+          },
         }}
         title={modal.variant === 'pause' ? 'Pausa consciente' : 'Resumo de sessão'}
       >
         {/* Future: embed spaced repetition schedule previews and loci environment snapshots here. */}
       </Modal>
     </main>
+  );
+}
+
+export default function GamePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="text-white">Carregando...</p>
+        </div>
+      }
+    >
+      <GameContent />
+    </Suspense>
   );
 }
