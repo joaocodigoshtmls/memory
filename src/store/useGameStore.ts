@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { CardData, GameSnapshot, GameStatus, LevelConfig } from '@/types/memory';
+import { generateDeck } from '@/lib/deckGenerator';
 
 type ModalState = {
   isOpen: boolean;
@@ -101,11 +102,11 @@ const createGameStore = (
   }),
   modal: defaultModal,
   initializeLevel: (config: LevelConfig) => {
-    const placeholderDeck = generatePlaceholderDeck(config);
+    const deck = generateDeck(config.id);
 
     set({
       levelId: config.id,
-      deck: placeholderDeck,
+      deck,
       revealedCardIds: [],
       matchedPairs: new Set<string>(),
       moves: 0,
