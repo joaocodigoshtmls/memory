@@ -11,10 +11,13 @@ type ModalState = {
 type GameStore = GameSnapshot & {
   deck: CardData[];
   modal: ModalState;
+  selectedCards: string[];
+  isChecking: boolean;
   initializeLevel: (config: LevelConfig) => void;
   setStatus: (status: GameStatus) => void;
   setModal: (modal: ModalState) => void;
-  recordReveal: (cardId: string) => void;
+  selectCard: (cardId: string) => void;
+  clearSelection: () => void;
   recordMatch: (pairId: string) => void;
   reset: () => void;
 };
@@ -101,6 +104,8 @@ const createGameStore = (
     objectives: ['placeholder'],
   }),
   modal: defaultModal,
+  selectedCards: [],
+  isChecking: false,
   initializeLevel: (config: LevelConfig) => {
     const deck = generateDeck(config.id);
 
@@ -112,16 +117,64 @@ const createGameStore = (
       moves: 0,
       elapsedSeconds: 0,
       status: 'countdown',
+      selectedCards: [],
+      isChecking: false,
     });
   },
   setStatus: (status: GameStatus) => set({ status }),
   setModal: (modal: ModalState) => set({ modal }),
-  recordReveal: (cardId: string) => {
-    const { revealedCardIds } = get();
+  selectCard: (cardId: string) => {
+    const { selectedCards, isChecking, deck, matchedPairs, moves } = get();
+    
+    // Prevent selection during checking or if already selected
+    if (isChecking || selectedCards.includes(cardId)) {
+      return;
+    }
+
+    const newSelectedCards = [...selectedCards, cardId];
+    
+    // Update revealed cards to show the newly selected card
     set({
-      revealedCardIds: revealedCardIds.includes(cardId)
-        ? revealedCardIds
-        : [...revealedCardIds, cardId],
+      selectedCards: newSelectedCards,
+      revealedCardIds: newSelectedCards,
+    });
+
+    // If two cards are now selected, check for a match
+    if (newSelectedCards.length === 2) {
+      set({ isChecking: true });
+
+      const [firstCardId, secondCardId] = newSelectedCards;
+      const firstCard = deck.find((card) => card.id === firstCardId);
+      const secondCard = deck.find((card) => card.id === secondCardId);
+
+      if (firstCard && secondCard && firstCard.pairId === secondCard.pairId) {
+        // Match found - mark as matched immediately
+        const nextMatches = new Set(matchedPairs);
+        nextMatches.add(firstCard.pairId);
+
+        set({
+          matchedPairs: nextMatches,
+          moves: moves + 1,
+          selectedCards: [],
+          isChecking: false,
+        });
+      } else {
+        // No match - show cards briefly then hide them
+        setTimeout(() => {
+          set({
+            revealedCardIds: [],
+            selectedCards: [],
+            moves: moves + 1,
+            isChecking: false,
+          });
+        }, 1200); // 1.2 second delay to allow visualization
+      }
+    }
+  },
+  clearSelection: () => {
+    set({
+      selectedCards: [],
+      revealedCardIds: [],
     });
   },
   recordMatch: (pairId: string) => {
@@ -143,6 +196,8 @@ const createGameStore = (
       levelId,
       deck: generateDeck(levelId),
       modal: defaultModal,
+      selectedCards: [],
+      isChecking: false,
     });
   },
 });
