@@ -6,12 +6,6 @@
       "type": "shell",
       "command": "npm",
       "args": ["install"]
-    },
-    {
-      "label": "npm install",
-      "type": "shell",
-      "command": "cmd",
-      "args": ["/c", "npm install"]
     }
   ]
 }
