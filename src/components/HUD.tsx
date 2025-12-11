@@ -6,6 +6,7 @@ type HUDProps = {
   elapsedSeconds: number;
   status: GameStatus;
   onPauseToggle: () => void;
+  onReset: () => void;
 };
 
 export function HUD({
@@ -14,6 +15,7 @@ export function HUD({
   elapsedSeconds,
   status,
   onPauseToggle,
+  onReset,
 }: HUDProps) {
   const minutes = Math.floor(elapsedSeconds / 60)
     .toString()
@@ -50,6 +52,13 @@ export function HUD({
         onClick={onPauseToggle}
       >
         {status === 'paused' ? 'Retomar' : 'Pausar'}
+      </button>
+      <button
+        type="button"
+        className="rounded-full bg-red-500/80 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-500"
+        onClick={onReset}
+      >
+        Tentar novamente
       </button>
       {/* Future: inject adaptive feedback indicators and confidence sliders here. */}
     </section>
