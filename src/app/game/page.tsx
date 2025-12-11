@@ -104,8 +104,13 @@ function GameContent() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Apply loci theme based on level
+  const lociThemeClass = `loci-theme-${level.id}`;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-10">
+    <main
+      className={`mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-10 transition-colors duration-1000 ${lociThemeClass}`}
+    >
       <HUD
         elapsedSeconds={elapsedSeconds}
         levelName={level.name}
@@ -129,6 +134,22 @@ function GameContent() {
           <p className="text-sm text-slate-300">
             Acompanhe suas conquistas e receba dicas personalizadas durante o treino.
           </p>
+          
+          {/* Loci Environment Description */}
+          <div className="rounded-lg bg-white/5 p-4">
+            <h3 className="mb-2 text-sm font-semibold text-primary-300">
+              🏛️ Ambiente espacial
+            </h3>
+            <p className="text-xs text-slate-400">
+              {level.id === 'focus-start' &&
+                'Quarto sereno: Associe cada carta a um objeto no espaço ao seu redor.'}
+              {level.id === 'adaptive-loop' &&
+                'Floresta encantada: Visualize cada carta em um local específico da natureza.'}
+              {level.id === 'loci-journey' &&
+                'Palácio da memória: Navegue por salas conectadas, cada uma com suas cartas.'}
+            </p>
+          </div>
+          
           <ul className="space-y-2 text-sm text-slate-200">
             {level.objectives.map((objective) => (
               <li key={objective} className="flex items-center gap-2">
