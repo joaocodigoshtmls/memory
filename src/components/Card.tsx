@@ -48,7 +48,11 @@ export function Card({ card, isMatched, isRevealed, onSelect }: CardProps) {
       
       {/* Category indicator for categorical grouping */}
       {card.category !== 'neutral' && !isMatched && (
-        <span className={`absolute bottom-1 right-1 h-3 w-3 rounded-full ${categoryStyle.bg}`} />
+        <span
+          className={`absolute bottom-1 right-1 h-3 w-3 rounded-full ${categoryStyle.bg}`}
+          aria-label={`Category: ${card.category}`}
+          title={`Category: ${card.category}`}
+        />
       )}
     </button>
   );

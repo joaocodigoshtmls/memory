@@ -299,7 +299,8 @@ const createGameStore = (
         const newFailedPairs = new Map(failedPairs);
         newFailedPairs.set(pairKey, failCount);
 
-        // Record failed pairs for spaced repetition (record each distinct pair once)
+        // Record failed pairs for spaced repetition
+        // In a mismatch, both cards belong to different pairs, so record both
         if (firstCard) {
           recordFailedPair(
             firstCard.pairId,
@@ -309,8 +310,7 @@ const createGameStore = (
             FAILURE_THRESHOLD
           );
         }
-        // Only record secondCard if it's a different pair than firstCard
-        if (secondCard && secondCard.pairId !== firstCard?.pairId) {
+        if (secondCard) {
           recordFailedPair(
             secondCard.pairId,
             secondCard.value,

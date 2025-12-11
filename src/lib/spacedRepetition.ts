@@ -89,11 +89,11 @@ export function recordFailedPair(
   pairId: string,
   value: string,
   category: string,
-  currentFailureCount: number,
+  totalFailureCount: number,
   failureThreshold: number = 2
 ): void {
   // Don't record until threshold is met
-  if (currentFailureCount < failureThreshold) {
+  if (totalFailureCount < failureThreshold) {
     return;
   }
 
@@ -105,7 +105,7 @@ export function recordFailedPair(
   if (existingPairIndex >= 0) {
     // Update existing pair
     const pair = data.difficultPairs[existingPairIndex];
-    pair.failureCount = currentFailureCount;
+    pair.failureCount = totalFailureCount;
     pair.lastFailureTimestamp = now;
     pair.nextReviewTimestamp = calculateNextReview(pair.rehearsalCount, now);
   } else {
@@ -114,7 +114,7 @@ export function recordFailedPair(
       pairId,
       value,
       category,
-      failureCount: currentFailureCount,
+      failureCount: totalFailureCount,
       lastFailureTimestamp: now,
       nextReviewTimestamp: calculateNextReview(0, now),
       rehearsalCount: 0,
