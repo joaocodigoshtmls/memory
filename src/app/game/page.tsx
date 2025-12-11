@@ -249,7 +249,7 @@ function GameContent() {
         {modal.variant === 'summary' && modal.payload ? (
           <div className="space-y-4">
             <div className="rounded-lg bg-white/5 p-4">
-              <dl className="grid grid-cols-3 gap-4 text-center">
+              <dl className="grid grid-cols-2 gap-4 text-center md:grid-cols-3">
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-slate-400">
                     Tempo total
@@ -266,7 +266,7 @@ function GameContent() {
                     {(modal.payload as any).moves}
                   </dd>
                 </div>
-                <div>
+                <div className="col-span-2 md:col-span-1">
                   <dt className="text-xs uppercase tracking-wide text-slate-400">
                     Pontuação
                   </dt>

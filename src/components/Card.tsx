@@ -20,8 +20,8 @@ export function Card({ card, isMatched, isRevealed, onSelect }: CardProps) {
   const hasLociEnvironment = lociHint?.includes('loci-position');
 
   // Get category-specific border color
-  const categoryColor = CATEGORY_COLORS[card.category] || CATEGORY_COLORS.neutral;
-  const borderClass = card.category !== 'neutral' ? categoryColor.split(' ')[0] : 'border-white/10';
+  const categoryStyle = CATEGORY_COLORS[card.category] || CATEGORY_COLORS.neutral;
+  const borderClass = card.category !== 'neutral' ? categoryStyle.border : 'border-white/10';
 
   return (
     <button
@@ -48,7 +48,7 @@ export function Card({ card, isMatched, isRevealed, onSelect }: CardProps) {
       
       {/* Category indicator for categorical grouping */}
       {card.category !== 'neutral' && !isMatched && (
-        <span className={`absolute bottom-1 right-1 h-3 w-3 rounded-full ${categoryColor.split(' ')[1]}`} />
+        <span className={`absolute bottom-1 right-1 h-3 w-3 rounded-full ${categoryStyle.bg}`} />
       )}
     </button>
   );

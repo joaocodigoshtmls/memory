@@ -22,12 +22,32 @@ export type CategoryGroup = {
 /**
  * Category-specific colors for visual grouping.
  */
-export const CATEGORY_COLORS: Record<string, string> = {
-  animals: 'border-amber-400 bg-amber-500/10',
-  nature: 'border-green-400 bg-green-500/10',
-  objects: 'border-blue-400 bg-blue-500/10',
-  abstract: 'border-purple-400 bg-purple-500/10',
-  neutral: 'border-white/20 bg-white/5',
+export const CATEGORY_COLORS: Record<string, { border: string; bg: string; combined: string }> = {
+  animals: {
+    border: 'border-amber-400',
+    bg: 'bg-amber-500/10',
+    combined: 'border-amber-400 bg-amber-500/10',
+  },
+  nature: {
+    border: 'border-green-400',
+    bg: 'bg-green-500/10',
+    combined: 'border-green-400 bg-green-500/10',
+  },
+  objects: {
+    border: 'border-blue-400',
+    bg: 'bg-blue-500/10',
+    combined: 'border-blue-400 bg-blue-500/10',
+  },
+  abstract: {
+    border: 'border-purple-400',
+    bg: 'bg-purple-500/10',
+    combined: 'border-purple-400 bg-purple-500/10',
+  },
+  neutral: {
+    border: 'border-white/20',
+    bg: 'bg-white/5',
+    combined: 'border-white/20 bg-white/5',
+  },
 };
 
 /**
@@ -115,7 +135,8 @@ export function generateCategoryGroups(deck: CardData[]): CategoryGroup[] {
         category,
         cards: cards.map((c) => c.value),
         hint: categoryHints[category] || categoryHints.neutral,
-        color: CATEGORY_COLORS[category] || CATEGORY_COLORS.neutral,
+        color:
+          (CATEGORY_COLORS[category] || CATEGORY_COLORS.neutral).combined,
       });
     }
   });

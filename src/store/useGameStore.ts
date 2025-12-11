@@ -294,11 +294,12 @@ const createGameStore = (
         const newFailedPairs = new Map(failedPairs);
         newFailedPairs.set(pairKey, failCount);
 
-        // Record failed pairs for spaced repetition (only individual cards, not mismatches)
+        // Record failed pairs for spaced repetition (record each distinct pair once)
         if (firstCard && failCount >= 2) {
           recordFailedPair(firstCard.pairId, firstCard.value, firstCard.category, 2);
         }
-        if (secondCard && failCount >= 2) {
+        // Only record secondCard if it's a different pair than firstCard
+        if (secondCard && secondCard.pairId !== firstCard?.pairId && failCount >= 2) {
           recordFailedPair(secondCard.pairId, secondCard.value, secondCard.category, 2);
         }
         

@@ -96,6 +96,9 @@ export function recordFailedPair(
     pair.failureCount += 1;
     pair.lastFailureTimestamp = now;
     pair.nextReviewTimestamp = calculateNextReview(pair.rehearsalCount, now);
+    
+    data.lastUpdated = now;
+    saveSpacedRepetitionData(data);
   } else {
     // Add new difficult pair only if it meets the threshold
     const newPair: DifficultPair = {
@@ -108,17 +111,13 @@ export function recordFailedPair(
       rehearsalCount: 0,
     };
 
-    // Only save if this is at least the Nth failure
+    // Only save if this meets the failure threshold
     if (newPair.failureCount >= failureThreshold) {
       data.difficultPairs.push(newPair);
-    } else {
-      // Store temporarily to track count
-      data.difficultPairs.push(newPair);
+      data.lastUpdated = now;
+      saveSpacedRepetitionData(data);
     }
   }
-
-  data.lastUpdated = now;
-  saveSpacedRepetitionData(data);
 }
 
 /**
