@@ -47,4 +47,6 @@ export type GameSnapshot = {
   moves: number;
   elapsedSeconds: number;
   status: GameStatus;
+  score: number;
+  categoryBonusCount: number;
 };

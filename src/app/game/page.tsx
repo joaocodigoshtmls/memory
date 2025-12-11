@@ -1,10 +1,11 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { GameBoard } from '@/components/GameBoard';
 import { HUD } from '@/components/HUD';
 import { Modal } from '@/components/Modal';
+import { MnemonicHintPanel } from '@/components/MnemonicHintPanel';
 import { levelsConfig } from '@/lib/levelsConfig';
 import { useGameStore } from '@/store/useGameStore';
 import type { CardData } from '@/types/memory';
@@ -32,6 +33,8 @@ function GameContent() {
   const isChecking = useGameStore((state) => state.isChecking);
   const timerStarted = useGameStore((state) => state.timerStarted);
   const feedbackMessages = useGameStore((state) => state.feedbackMessages);
+  const score = useGameStore((state) => state.score);
+  const categoryBonusCount = useGameStore((state) => state.categoryBonusCount);
   const initializeLevel = useGameStore((state) => state.initializeLevel);
   const setStatus = useGameStore((state) => state.setStatus);
   const setModal = useGameStore((state) => state.setModal);
@@ -39,21 +42,33 @@ function GameContent() {
   const incrementTimer = useGameStore((state) => state.incrementTimer);
   const reset = useGameStore((state) => state.reset);
 
+  const [showMnemonicHints, setShowMnemonicHints] = useState(false);
+
   useEffect(() => {
     initializeLevel(level);
-    // Future: wire countdown, spaced repetition scheduler, and loci environment bootstrap here.
+    // Show mnemonic hints if level uses mnemonic-cue or categorical-grouping
+    const showHints =
+      level.difficultyHooks.includes('mnemonic-cue') ||
+      level.difficultyHooks.includes('categorical-grouping');
+    setShowMnemonicHints(showHints);
   }, [initializeLevel, level]);
 
   useEffect(() => {
     // Transition from countdown to in-progress after a brief delay
-    if (status === 'countdown') {
+    // Don't auto-transition if mnemonic hints are showing
+    if (status === 'countdown' && !showMnemonicHints) {
       const timer = setTimeout(() => {
         setStatus('in-progress');
       }, COUNTDOWN_DURATION);
 
       return () => clearTimeout(timer);
     }
-  }, [status, setStatus]);
+  }, [status, setStatus, showMnemonicHints]);
+
+  const handleDismissMnemonicHints = useCallback(() => {
+    setShowMnemonicHints(false);
+    setStatus('in-progress');
+  }, [setStatus]);
 
   useEffect(() => {
     // Timer: increment elapsed seconds when game is in-progress and timer has started
@@ -134,6 +149,24 @@ function GameContent() {
           <p className="text-sm text-slate-300">
             Acompanhe suas conquistas e receba dicas personalizadas durante o treino.
           </p>
+
+          {/* Score Display */}
+          <div className="rounded-lg bg-gradient-to-r from-primary-500/20 to-purple-500/20 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400">Pontuação</p>
+                <p className="text-2xl font-bold text-white">{score}</p>
+              </div>
+              {categoryBonusCount > 0 && (
+                <div className="text-right">
+                  <p className="text-xs text-slate-400">Bônus de categoria</p>
+                  <p className="text-lg font-semibold text-primary-300">
+                    {categoryBonusCount}x 🎯
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
           
           {/* Loci Environment Description */}
           <div className="rounded-lg bg-white/5 p-4">
@@ -216,7 +249,7 @@ function GameContent() {
         {modal.variant === 'summary' && modal.payload ? (
           <div className="space-y-4">
             <div className="rounded-lg bg-white/5 p-4">
-              <dl className="grid grid-cols-2 gap-4 text-center">
+              <dl className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-slate-400">
                     Tempo total
@@ -233,12 +266,31 @@ function GameContent() {
                     {(modal.payload as any).moves}
                   </dd>
                 </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Pontuação
+                  </dt>
+                  <dd className="mt-1 text-2xl font-bold text-primary-400">
+                    {(modal.payload as any).score}
+                  </dd>
+                </div>
               </dl>
             </div>
+            {(modal.payload as any).categoryBonusCount > 0 && (
+              <div className="rounded-lg bg-primary-500/10 p-3 text-center text-sm text-primary-200">
+                🎯 Você ganhou {(modal.payload as any).categoryBonusCount} bônus de categoria!
+              </div>
+            )}
           </div>
         ) : null}
         {/* Future: embed spaced repetition schedule previews and loci environment snapshots here. */}
       </Modal>
+
+      <MnemonicHintPanel
+        deck={deck}
+        isVisible={showMnemonicHints}
+        onDismiss={handleDismissMnemonicHints}
+      />
     </main>
   );
 }

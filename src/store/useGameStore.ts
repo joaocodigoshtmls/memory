@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import type { CardData, GameSnapshot, GameStatus, LevelConfig } from '@/types/memory';
 import { generateDeck } from '@/lib/deckGenerator';
+import {
+  recordFailedPair,
+  markPairReviewed,
+  getDuePairs,
+} from '@/lib/spacedRepetition';
 
 /**
  * Duration in milliseconds to display mismatched cards before hiding them.
@@ -47,6 +52,8 @@ const initialSnapshot: GameSnapshot = {
   moves: 0,
   elapsedSeconds: 0,
   status: 'idle',
+  score: 0,
+  categoryBonusCount: 0,
 };
 
 const defaultModal: ModalState = {
@@ -138,6 +145,15 @@ const createGameStore = (
 
     const deck = generateDeck(config.id);
 
+    // Load spaced repetition pairs if this level uses spaced repetition
+    const hasSpacedRepetition = config.difficultyHooks.includes('spaced-repetition');
+    let duePairs: Array<{ pairId: string; value: string }> = [];
+    
+    if (hasSpacedRepetition) {
+      const duePairsData = getDuePairs();
+      duePairs = duePairsData.map((p) => ({ pairId: p.pairId, value: p.value }));
+    }
+
     set({
       levelId: config.id,
       deck,
@@ -152,7 +168,18 @@ const createGameStore = (
       timerStarted: false,
       failedPairs: new Map(),
       feedbackMessages: [],
+      score: 0,
+      categoryBonusCount: 0,
     });
+
+    // Show feedback about due pairs
+    if (duePairs.length > 0) {
+      const { addFeedbackMessage } = get();
+      addFeedbackMessage({
+        text: `📚 ${duePairs.length} pares anteriores para revisar!`,
+        type: 'tip',
+      });
+    }
   },
   setStatus: (status: GameStatus) => set({ status }),
   setModal: (modal: ModalState) => set({ modal }),
@@ -202,6 +229,30 @@ const createGameStore = (
         const totalPairs = deck.length / 2;
         const allMatched = nextMatches.size === totalPairs;
 
+        // Calculate score and category bonus
+        const { score, categoryBonusCount, addFeedbackMessage } = get();
+        let baseScore = 10;
+        let bonusScore = 0;
+        let newCategoryBonusCount = categoryBonusCount;
+
+        // Check if both cards are in same category (and not neutral)
+        if (
+          firstCard.category !== 'neutral' &&
+          firstCard.category === secondCard.category
+        ) {
+          bonusScore = 5;
+          newCategoryBonusCount += 1;
+          addFeedbackMessage({
+            text: `🎯 Bônus de categoria! +${bonusScore} pontos`,
+            type: 'success',
+          });
+        }
+
+        const newScore = score + baseScore + bonusScore;
+
+        // Mark as reviewed in spaced repetition if applicable
+        markPairReviewed(firstCard.pairId, true);
+
         set({
           matchedPairs: nextMatches,
           moves: moves + 1,
@@ -209,11 +260,12 @@ const createGameStore = (
           isChecking: false,
           checkTimeoutId: null,
           status: allMatched ? 'completed' : get().status,
+          score: newScore,
+          categoryBonusCount: newCategoryBonusCount,
         });
 
         // Show victory modal if all pairs are matched
         if (allMatched) {
-          const { addFeedbackMessage } = get();
           addFeedbackMessage({
             text: 'Excelente! Você completou todos os pares!',
             type: 'success',
@@ -226,6 +278,8 @@ const createGameStore = (
               payload: {
                 elapsedSeconds: get().elapsedSeconds,
                 moves: moves + 1,
+                score: newScore,
+                categoryBonusCount: newCategoryBonusCount,
               },
             },
           });
@@ -239,6 +293,14 @@ const createGameStore = (
         const failCount = (failedPairs.get(pairKey) || 0) + 1;
         const newFailedPairs = new Map(failedPairs);
         newFailedPairs.set(pairKey, failCount);
+
+        // Record failed pairs for spaced repetition (only individual cards, not mismatches)
+        if (firstCard && failCount >= 2) {
+          recordFailedPair(firstCard.pairId, firstCard.value, firstCard.category, 2);
+        }
+        if (secondCard && failCount >= 2) {
+          recordFailedPair(secondCard.pairId, secondCard.value, secondCard.category, 2);
+        }
         
         // Provide cognitive feedback based on performance
         if (failCount === 3) {
@@ -320,6 +382,8 @@ const createGameStore = (
       failedPairs: new Map(),
       feedbackMessages: [],
       status: 'countdown',
+      score: 0,
+      categoryBonusCount: 0,
     });
   },
 });

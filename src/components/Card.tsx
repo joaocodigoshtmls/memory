@@ -1,4 +1,5 @@
 import type { CardData } from '@/types/memory';
+import { CATEGORY_COLORS } from '@/lib/mnemonicHints';
 
 type CardProps = {
   card: CardData;
@@ -18,10 +19,14 @@ export function Card({ card, isMatched, isRevealed, onSelect }: CardProps) {
   const lociHint = card.metadata?.cues?.visualHint;
   const hasLociEnvironment = lociHint?.includes('loci-position');
 
+  // Get category-specific border color
+  const categoryColor = CATEGORY_COLORS[card.category] || CATEGORY_COLORS.neutral;
+  const borderClass = card.category !== 'neutral' ? categoryColor.split(' ')[0] : 'border-white/10';
+
   return (
     <button
       type="button"
-      className={`relative flex h-32 items-center justify-center rounded-xl border border-white/10 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+      className={`relative flex h-32 items-center justify-center rounded-xl border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${borderClass} ${
         isMatched
           ? 'bg-primary-500/60 text-white'
           : isRevealed
@@ -43,7 +48,7 @@ export function Card({ card, isMatched, isRevealed, onSelect }: CardProps) {
       
       {/* Category indicator for categorical grouping */}
       {card.category !== 'neutral' && !isMatched && (
-        <span className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-white/10" />
+        <span className={`absolute bottom-1 right-1 h-3 w-3 rounded-full ${categoryColor.split(' ')[1]}`} />
       )}
     </button>
   );
