@@ -31,6 +31,7 @@ function GameContent() {
   const modal = useGameStore((state) => state.modal);
   const isChecking = useGameStore((state) => state.isChecking);
   const timerStarted = useGameStore((state) => state.timerStarted);
+  const feedbackMessages = useGameStore((state) => state.feedbackMessages);
   const initializeLevel = useGameStore((state) => state.initializeLevel);
   const setStatus = useGameStore((state) => state.setStatus);
   const setModal = useGameStore((state) => state.setModal);
@@ -92,8 +93,24 @@ function GameContent() {
     reset();
   }, [reset]);
 
+  const handlePlayAgain = useCallback(() => {
+    setModal({ isOpen: false, variant: null });
+    reset();
+  }, [reset, setModal]);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Apply loci theme based on level
+  const lociThemeClass = `loci-theme-${level.id}`;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-10">
+    <main
+      className={`mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-10 transition-colors duration-1000 ${lociThemeClass}`}
+    >
       <HUD
         elapsedSeconds={elapsedSeconds}
         levelName={level.name}
@@ -115,10 +132,24 @@ function GameContent() {
         <aside className="w-full max-w-sm space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-lg font-semibold text-white">Missão cognitiva</h2>
           <p className="text-sm text-slate-300">
-            As próximas interações habilitarão dicas visuais, revisitações espaçadas e
-            feedback adaptativo. Utilize esta área para acompanhar insights
-            personalizados.
+            Acompanhe suas conquistas e receba dicas personalizadas durante o treino.
           </p>
+          
+          {/* Loci Environment Description */}
+          <div className="rounded-lg bg-white/5 p-4">
+            <h3 className="mb-2 text-sm font-semibold text-primary-300">
+              🏛️ Ambiente espacial
+            </h3>
+            <p className="text-xs text-slate-400">
+              {level.id === 'focus-start' &&
+                'Quarto sereno: Associe cada carta a um objeto no espaço ao seu redor.'}
+              {level.id === 'adaptive-loop' &&
+                'Floresta encantada: Visualize cada carta em um local específico da natureza.'}
+              {level.id === 'loci-journey' &&
+                'Palácio da memória: Navegue por salas conectadas, cada uma com suas cartas.'}
+            </p>
+          </div>
+          
           <ul className="space-y-2 text-sm text-slate-200">
             {level.objectives.map((objective) => (
               <li key={objective} className="flex items-center gap-2">
@@ -127,27 +158,85 @@ function GameContent() {
               </li>
             ))}
           </ul>
+          
+          {feedbackMessages.length > 0 && (
+            <div className="space-y-3 border-t border-white/10 pt-4">
+              <h3 className="text-sm font-semibold text-white">Feedback cognitivo</h3>
+              {feedbackMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`rounded-lg p-3 text-sm ${
+                    msg.type === 'success'
+                      ? 'bg-green-500/10 text-green-200'
+                      : msg.type === 'tip'
+                        ? 'bg-blue-500/10 text-blue-200'
+                        : 'bg-purple-500/10 text-purple-200'
+                  }`}
+                >
+                  <span className="mr-2">
+                    {msg.type === 'success' ? '✨' : msg.type === 'tip' ? '💡' : '💪'}
+                  </span>
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+          )}
         </aside>
       </section>
 
       <Modal
-        description="Respire fundo e visualize seu caminho. Você poderá retomar quando estiver pronto."
+        description={
+          modal.variant === 'summary'
+            ? 'Parabéns! Você completou todos os pares com sucesso.'
+            : 'Respire fundo e visualize seu caminho. Você poderá retomar quando estiver pronto.'
+        }
         isOpen={modal.isOpen}
-        primaryAction={{
-          label: 'Continuar',
-          onSelect: () => {
-            setStatus('in-progress');
-            setModal({ isOpen: false, variant: null });
-          },
-        }}
+        primaryAction={
+          modal.variant === 'summary'
+            ? {
+                label: 'Jogar novamente',
+                onSelect: handlePlayAgain,
+              }
+            : {
+                label: 'Continuar',
+                onSelect: () => {
+                  setStatus('in-progress');
+                  setModal({ isOpen: false, variant: null });
+                },
+              }
+        }
         secondaryAction={{
           label: 'Voltar à seleção',
           onSelect: () => {
             setModal({ isOpen: false, variant: null });
           },
         }}
-        title={modal.variant === 'pause' ? 'Pausa consciente' : 'Resumo de sessão'}
+        title={modal.variant === 'pause' ? 'Pausa consciente' : 'Vitória! 🎉'}
       >
+        {modal.variant === 'summary' && modal.payload ? (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-white/5 p-4">
+              <dl className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Tempo total
+                  </dt>
+                  <dd className="mt-1 text-2xl font-bold text-primary-400">
+                    {formatTime((modal.payload as any).elapsedSeconds)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Tentativas
+                  </dt>
+                  <dd className="mt-1 text-2xl font-bold text-primary-400">
+                    {(modal.payload as any).moves}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        ) : null}
         {/* Future: embed spaced repetition schedule previews and loci environment snapshots here. */}
       </Modal>
     </main>

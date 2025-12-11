@@ -14,6 +14,10 @@ export function Card({ card, isMatched, isRevealed, onSelect }: CardProps) {
     }
   };
 
+  // Extract loci position hint from metadata
+  const lociHint = card.metadata?.cues?.visualHint;
+  const hasLociEnvironment = lociHint?.includes('loci-position');
+
   return (
     <button
       type="button"
@@ -26,10 +30,21 @@ export function Card({ card, isMatched, isRevealed, onSelect }: CardProps) {
       }`}
       onClick={handleClick}
     >
+      {/* Loci spatial indicator - subtle visual cue for position */}
+      {hasLociEnvironment && !isMatched && (
+        <span className="absolute left-1 top-1 text-[8px] font-mono text-white/20">
+          {lociHint?.split('-').pop()}
+        </span>
+      )}
+      
       <span className="text-xl font-semibold tracking-wide">
         {isRevealed || isMatched ? card.value : '•'}
       </span>
-      {/* Future: render mnemonic cues and loci overlays driven by card.metadata */}
+      
+      {/* Category indicator for categorical grouping */}
+      {card.category !== 'neutral' && !isMatched && (
+        <span className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-white/10" />
+      )}
     </button>
   );
 }
