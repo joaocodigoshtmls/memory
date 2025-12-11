@@ -30,10 +30,13 @@ function GameContent() {
   const status = useGameStore((state) => state.status);
   const modal = useGameStore((state) => state.modal);
   const isChecking = useGameStore((state) => state.isChecking);
+  const timerStarted = useGameStore((state) => state.timerStarted);
   const initializeLevel = useGameStore((state) => state.initializeLevel);
   const setStatus = useGameStore((state) => state.setStatus);
   const setModal = useGameStore((state) => state.setModal);
   const selectCard = useGameStore((state) => state.selectCard);
+  const incrementTimer = useGameStore((state) => state.incrementTimer);
+  const reset = useGameStore((state) => state.reset);
 
   useEffect(() => {
     initializeLevel(level);
@@ -51,13 +54,24 @@ function GameContent() {
     }
   }, [status, setStatus]);
 
+  useEffect(() => {
+    // Timer: increment elapsed seconds when game is in-progress and timer has started
+    if (status === 'in-progress' && timerStarted) {
+      const interval = setInterval(() => {
+        incrementTimer();
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [status, timerStarted, incrementTimer]);
+
   const handleCardSelect = useCallback(
     (card: CardData) => {
       // Prevent card selection during checking or when game is not in progress
       if (isChecking || status !== 'in-progress') {
         return;
       }
-      
+
       selectCard(card.id);
       // Future: plug adaptive difficulty and cue suggestions before matching evaluation.
     },
@@ -74,6 +88,10 @@ function GameContent() {
     });
   };
 
+  const handleReset = useCallback(() => {
+    reset();
+  }, [reset]);
+
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-10">
       <HUD
@@ -81,6 +99,7 @@ function GameContent() {
         levelName={level.name}
         moves={moves}
         onPauseToggle={handlePauseToggle}
+        onReset={handleReset}
         status={status}
       />
 

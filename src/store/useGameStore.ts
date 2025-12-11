@@ -20,11 +20,13 @@ type GameStore = GameSnapshot & {
   selectedCards: string[];
   isChecking: boolean;
   checkTimeoutId: NodeJS.Timeout | null;
+  timerStarted: boolean;
   initializeLevel: (config: LevelConfig) => void;
   setStatus: (status: GameStatus) => void;
   setModal: (modal: ModalState) => void;
   selectCard: (cardId: string) => void;
   clearSelection: () => void;
+  incrementTimer: () => void;
   reset: () => void;
 };
 
@@ -45,13 +47,13 @@ const defaultModal: ModalState = {
 /**
  * Generates a placeholder deck for testing and development purposes.
  * This is a temporary implementation that creates simple stimulus cards.
- * 
+ *
  * @todo Replace with actual content-based deck generator that uses:
  * - Scientific concepts for cognitive training
  * - Real mnemonic cues and visual hints
  * - Proper spaced repetition metadata
  * - Category-based grouping with meaningful content
- * 
+ *
  * @param config - Level configuration specifying card pairs and difficulty hooks
  * @returns Array of CardData representing the shuffled deck
  */
@@ -113,9 +115,10 @@ const createGameStore = (
   selectedCards: [],
   isChecking: false,
   checkTimeoutId: null,
+  timerStarted: false,
   initializeLevel: (config: LevelConfig) => {
     const { checkTimeoutId } = get();
-    
+
     // Clear any existing timeout to prevent memory leaks
     if (checkTimeoutId) {
       clearTimeout(checkTimeoutId);
@@ -134,25 +137,40 @@ const createGameStore = (
       selectedCards: [],
       isChecking: false,
       checkTimeoutId: null,
+      timerStarted: false,
     });
   },
   setStatus: (status: GameStatus) => set({ status }),
   setModal: (modal: ModalState) => set({ modal }),
   selectCard: (cardId: string) => {
-    const { selectedCards, isChecking, deck, matchedPairs, moves, checkTimeoutId } = get();
-    
+    const {
+      selectedCards,
+      isChecking,
+      deck,
+      matchedPairs,
+      moves,
+      checkTimeoutId,
+      timerStarted,
+    } = get();
+
     // Prevent selection during checking or if already selected
     if (isChecking || selectedCards.includes(cardId)) {
       return;
     }
 
     const newSelectedCards = [...selectedCards, cardId];
-    
-    // Update revealed cards to show the newly selected card
-    set({
+
+    // Start timer on first card click
+    const updates: Partial<GameStore> = {
       selectedCards: newSelectedCards,
       revealedCardIds: newSelectedCards,
-    });
+    };
+
+    if (!timerStarted) {
+      updates.timerStarted = true;
+    }
+
+    set(updates);
 
     // If two cards are now selected, check for a match
     if (newSelectedCards.length === 2) {
@@ -185,35 +203,39 @@ const createGameStore = (
             checkTimeoutId: null,
           });
         }, MISMATCH_DISPLAY_DURATION);
-        
+
         set({ checkTimeoutId: timeoutId });
       }
     }
   },
   clearSelection: () => {
     const { checkTimeoutId } = get();
-    
+
     // Clear any existing timeout
     if (checkTimeoutId) {
       clearTimeout(checkTimeoutId);
     }
-    
+
     set({
       selectedCards: [],
       revealedCardIds: [],
       checkTimeoutId: null,
     });
   },
+  incrementTimer: () => {
+    const { elapsedSeconds } = get();
+    set({ elapsedSeconds: elapsedSeconds + 1 });
+  },
   reset: () => {
     // Resets game state while generating a fresh shuffled deck.
     // This allows players to retry the level with a new card layout.
     const { levelId, checkTimeoutId } = get();
-    
+
     // Clear any existing timeout to prevent memory leaks
     if (checkTimeoutId) {
       clearTimeout(checkTimeoutId);
     }
-    
+
     set({
       ...initialSnapshot,
       levelId,
@@ -222,6 +244,8 @@ const createGameStore = (
       selectedCards: [],
       isChecking: false,
       checkTimeoutId: null,
+      timerStarted: false,
+      status: 'countdown',
     });
   },
 });
