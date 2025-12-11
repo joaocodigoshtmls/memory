@@ -13,6 +13,11 @@ import {
  */
 const MISMATCH_DISPLAY_DURATION = 1200;
 
+/**
+ * Number of failures required before a pair is recorded for spaced repetition.
+ */
+const FAILURE_THRESHOLD = 2;
+
 type ModalState = {
   isOpen: boolean;
   variant: 'pause' | 'summary' | 'onboarding' | null;
@@ -296,11 +301,23 @@ const createGameStore = (
 
         // Record failed pairs for spaced repetition (record each distinct pair once)
         if (firstCard) {
-          recordFailedPair(firstCard.pairId, firstCard.value, firstCard.category, failCount, 2);
+          recordFailedPair(
+            firstCard.pairId,
+            firstCard.value,
+            firstCard.category,
+            failCount,
+            FAILURE_THRESHOLD
+          );
         }
         // Only record secondCard if it's a different pair than firstCard
         if (secondCard && secondCard.pairId !== firstCard?.pairId) {
-          recordFailedPair(secondCard.pairId, secondCard.value, secondCard.category, failCount, 2);
+          recordFailedPair(
+            secondCard.pairId,
+            secondCard.value,
+            secondCard.category,
+            failCount,
+            FAILURE_THRESHOLD
+          );
         }
         
         // Provide cognitive feedback based on performance

@@ -22,17 +22,22 @@ export type SpacedRepetitionData = {
 
 const STORAGE_KEY = 'memory-trainer-spaced-repetition';
 
+// Time unit constants for better readability
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
 /**
  * Calculates the next review timestamp based on rehearsal count.
  * Uses exponential backoff: 5 min, 1 hour, 1 day, 3 days, 7 days
  */
 export function calculateNextReview(rehearsalCount: number, currentTimestamp: number): number {
   const intervals = [
-    5 * 60 * 1000, // 5 minutes
-    60 * 60 * 1000, // 1 hour
-    24 * 60 * 60 * 1000, // 1 day
-    3 * 24 * 60 * 60 * 1000, // 3 days
-    7 * 24 * 60 * 60 * 1000, // 7 days
+    5 * MINUTE_MS,  // 5 minutes
+    HOUR_MS,        // 1 hour
+    DAY_MS,         // 1 day
+    3 * DAY_MS,     // 3 days
+    7 * DAY_MS,     // 7 days
   ];
 
   const intervalIndex = Math.min(rehearsalCount, intervals.length - 1);
