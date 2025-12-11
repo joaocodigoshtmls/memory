@@ -185,13 +185,31 @@ const createGameStore = (
         const nextMatches = new Set(matchedPairs);
         nextMatches.add(firstCard.pairId);
 
+        const totalPairs = deck.length / 2;
+        const allMatched = nextMatches.size === totalPairs;
+
         set({
           matchedPairs: nextMatches,
           moves: moves + 1,
           selectedCards: [],
           isChecking: false,
           checkTimeoutId: null,
+          status: allMatched ? 'completed' : get().status,
         });
+
+        // Show victory modal if all pairs are matched
+        if (allMatched) {
+          set({
+            modal: {
+              isOpen: true,
+              variant: 'summary',
+              payload: {
+                elapsedSeconds: get().elapsedSeconds,
+                moves: moves + 1,
+              },
+            },
+          });
+        }
       } else {
         // No match - show cards briefly then hide them
         const timeoutId = setTimeout(() => {

@@ -92,6 +92,17 @@ function GameContent() {
     reset();
   }, [reset]);
 
+  const handlePlayAgain = useCallback(() => {
+    setModal({ isOpen: false, variant: null });
+    reset();
+  }, [reset, setModal]);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <main className="mx-auto flex min-h-screen max-w-6xl flex-col gap-10 px-6 py-10">
       <HUD
@@ -131,23 +142,58 @@ function GameContent() {
       </section>
 
       <Modal
-        description="Respire fundo e visualize seu caminho. Você poderá retomar quando estiver pronto."
+        description={
+          modal.variant === 'summary'
+            ? 'Parabéns! Você completou todos os pares com sucesso.'
+            : 'Respire fundo e visualize seu caminho. Você poderá retomar quando estiver pronto.'
+        }
         isOpen={modal.isOpen}
-        primaryAction={{
-          label: 'Continuar',
-          onSelect: () => {
-            setStatus('in-progress');
-            setModal({ isOpen: false, variant: null });
-          },
-        }}
+        primaryAction={
+          modal.variant === 'summary'
+            ? {
+                label: 'Jogar novamente',
+                onSelect: handlePlayAgain,
+              }
+            : {
+                label: 'Continuar',
+                onSelect: () => {
+                  setStatus('in-progress');
+                  setModal({ isOpen: false, variant: null });
+                },
+              }
+        }
         secondaryAction={{
           label: 'Voltar à seleção',
           onSelect: () => {
             setModal({ isOpen: false, variant: null });
           },
         }}
-        title={modal.variant === 'pause' ? 'Pausa consciente' : 'Resumo de sessão'}
+        title={modal.variant === 'pause' ? 'Pausa consciente' : 'Vitória! 🎉'}
       >
+        {modal.variant === 'summary' && modal.payload ? (
+          <div className="space-y-4">
+            <div className="rounded-lg bg-white/5 p-4">
+              <dl className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Tempo total
+                  </dt>
+                  <dd className="mt-1 text-2xl font-bold text-primary-400">
+                    {formatTime((modal.payload as any).elapsedSeconds)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs uppercase tracking-wide text-slate-400">
+                    Tentativas
+                  </dt>
+                  <dd className="mt-1 text-2xl font-bold text-primary-400">
+                    {(modal.payload as any).moves}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        ) : null}
         {/* Future: embed spaced repetition schedule previews and loci environment snapshots here. */}
       </Modal>
     </main>
