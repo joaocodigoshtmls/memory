@@ -286,7 +286,7 @@ const createGameStore = (
         }
       } else {
         // No match - show cards briefly then hide them
-        const { failedPairs, addFeedbackMessage } = get();
+        const { failedPairs, addFeedbackMessage: addMessage } = get();
         
         // Track failed attempts for adaptive difficulty
         const pairKey = [firstCard?.pairId, secondCard?.pairId].sort().join('-');
@@ -295,22 +295,22 @@ const createGameStore = (
         newFailedPairs.set(pairKey, failCount);
 
         // Record failed pairs for spaced repetition (record each distinct pair once)
-        if (firstCard && failCount >= 2) {
-          recordFailedPair(firstCard.pairId, firstCard.value, firstCard.category, 2);
+        if (firstCard) {
+          recordFailedPair(firstCard.pairId, firstCard.value, firstCard.category, failCount, 2);
         }
         // Only record secondCard if it's a different pair than firstCard
-        if (secondCard && secondCard.pairId !== firstCard?.pairId && failCount >= 2) {
-          recordFailedPair(secondCard.pairId, secondCard.value, secondCard.category, 2);
+        if (secondCard && secondCard.pairId !== firstCard?.pairId) {
+          recordFailedPair(secondCard.pairId, secondCard.value, secondCard.category, failCount, 2);
         }
         
         // Provide cognitive feedback based on performance
         if (failCount === 3) {
-          addFeedbackMessage({
+          addMessage({
             text: 'Tente criar uma imagem mental dessas cartas!',
             type: 'tip',
           });
         } else if (moves > 0 && moves % 10 === 0) {
-          addFeedbackMessage({
+          addMessage({
             text: 'Continue focado! Cada tentativa fortalece sua memória.',
             type: 'encouragement',
           });

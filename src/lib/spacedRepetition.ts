@@ -78,13 +78,20 @@ export function saveSpacedRepetitionData(data: SpacedRepetitionData): void {
 
 /**
  * Records a failed pair attempt.
+ * Only saves to localStorage when the total failure count meets the threshold.
  */
 export function recordFailedPair(
   pairId: string,
   value: string,
   category: string,
+  currentFailureCount: number,
   failureThreshold: number = 2
 ): void {
+  // Don't record until threshold is met
+  if (currentFailureCount < failureThreshold) {
+    return;
+  }
+
   const data = loadSpacedRepetitionData();
   const now = Date.now();
 
@@ -93,31 +100,25 @@ export function recordFailedPair(
   if (existingPairIndex >= 0) {
     // Update existing pair
     const pair = data.difficultPairs[existingPairIndex];
-    pair.failureCount += 1;
+    pair.failureCount = currentFailureCount;
     pair.lastFailureTimestamp = now;
     pair.nextReviewTimestamp = calculateNextReview(pair.rehearsalCount, now);
-    
-    data.lastUpdated = now;
-    saveSpacedRepetitionData(data);
   } else {
-    // Add new difficult pair only if it meets the threshold
+    // Add new difficult pair
     const newPair: DifficultPair = {
       pairId,
       value,
       category,
-      failureCount: 1,
+      failureCount: currentFailureCount,
       lastFailureTimestamp: now,
       nextReviewTimestamp: calculateNextReview(0, now),
       rehearsalCount: 0,
     };
-
-    // Only save if this meets the failure threshold
-    if (newPair.failureCount >= failureThreshold) {
-      data.difficultPairs.push(newPair);
-      data.lastUpdated = now;
-      saveSpacedRepetitionData(data);
-    }
+    data.difficultPairs.push(newPair);
   }
+
+  data.lastUpdated = now;
+  saveSpacedRepetitionData(data);
 }
 
 /**
