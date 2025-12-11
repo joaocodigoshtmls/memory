@@ -31,6 +31,7 @@ function GameContent() {
   const modal = useGameStore((state) => state.modal);
   const isChecking = useGameStore((state) => state.isChecking);
   const timerStarted = useGameStore((state) => state.timerStarted);
+  const feedbackMessages = useGameStore((state) => state.feedbackMessages);
   const initializeLevel = useGameStore((state) => state.initializeLevel);
   const setStatus = useGameStore((state) => state.setStatus);
   const setModal = useGameStore((state) => state.setModal);
@@ -126,9 +127,7 @@ function GameContent() {
         <aside className="w-full max-w-sm space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-lg font-semibold text-white">Missão cognitiva</h2>
           <p className="text-sm text-slate-300">
-            As próximas interações habilitarão dicas visuais, revisitações espaçadas e
-            feedback adaptativo. Utilize esta área para acompanhar insights
-            personalizados.
+            Acompanhe suas conquistas e receba dicas personalizadas durante o treino.
           </p>
           <ul className="space-y-2 text-sm text-slate-200">
             {level.objectives.map((objective) => (
@@ -138,6 +137,29 @@ function GameContent() {
               </li>
             ))}
           </ul>
+          
+          {feedbackMessages.length > 0 && (
+            <div className="space-y-3 border-t border-white/10 pt-4">
+              <h3 className="text-sm font-semibold text-white">Feedback cognitivo</h3>
+              {feedbackMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`rounded-lg p-3 text-sm ${
+                    msg.type === 'success'
+                      ? 'bg-green-500/10 text-green-200'
+                      : msg.type === 'tip'
+                        ? 'bg-blue-500/10 text-blue-200'
+                        : 'bg-purple-500/10 text-purple-200'
+                  }`}
+                >
+                  <span className="mr-2">
+                    {msg.type === 'success' ? '✨' : msg.type === 'tip' ? '💡' : '💪'}
+                  </span>
+                  {msg.text}
+                </div>
+              ))}
+            </div>
+          )}
         </aside>
       </section>
 

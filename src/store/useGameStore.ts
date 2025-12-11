@@ -14,6 +14,13 @@ type ModalState = {
   payload?: unknown;
 };
 
+type FeedbackMessage = {
+  id: string;
+  text: string;
+  type: 'encouragement' | 'tip' | 'success';
+  timestamp: number;
+};
+
 type GameStore = GameSnapshot & {
   deck: CardData[];
   modal: ModalState;
@@ -21,12 +28,15 @@ type GameStore = GameSnapshot & {
   isChecking: boolean;
   checkTimeoutId: NodeJS.Timeout | null;
   timerStarted: boolean;
+  failedPairs: Map<string, number>;
+  feedbackMessages: FeedbackMessage[];
   initializeLevel: (config: LevelConfig) => void;
   setStatus: (status: GameStatus) => void;
   setModal: (modal: ModalState) => void;
   selectCard: (cardId: string) => void;
   clearSelection: () => void;
   incrementTimer: () => void;
+  addFeedbackMessage: (message: Omit<FeedbackMessage, 'id' | 'timestamp'>) => void;
   reset: () => void;
 };
 
@@ -116,6 +126,8 @@ const createGameStore = (
   isChecking: false,
   checkTimeoutId: null,
   timerStarted: false,
+  failedPairs: new Map(),
+  feedbackMessages: [],
   initializeLevel: (config: LevelConfig) => {
     const { checkTimeoutId } = get();
 
@@ -138,6 +150,8 @@ const createGameStore = (
       isChecking: false,
       checkTimeoutId: null,
       timerStarted: false,
+      failedPairs: new Map(),
+      feedbackMessages: [],
     });
   },
   setStatus: (status: GameStatus) => set({ status }),
@@ -199,6 +213,12 @@ const createGameStore = (
 
         // Show victory modal if all pairs are matched
         if (allMatched) {
+          const { addFeedbackMessage } = get();
+          addFeedbackMessage({
+            text: 'Excelente! Você completou todos os pares!',
+            type: 'success',
+          });
+          
           set({
             modal: {
               isOpen: true,
@@ -212,6 +232,27 @@ const createGameStore = (
         }
       } else {
         // No match - show cards briefly then hide them
+        const { failedPairs, addFeedbackMessage } = get();
+        
+        // Track failed attempts for adaptive difficulty
+        const pairKey = [firstCard?.pairId, secondCard?.pairId].sort().join('-');
+        const failCount = (failedPairs.get(pairKey) || 0) + 1;
+        const newFailedPairs = new Map(failedPairs);
+        newFailedPairs.set(pairKey, failCount);
+        
+        // Provide cognitive feedback based on performance
+        if (failCount === 3) {
+          addFeedbackMessage({
+            text: 'Tente criar uma imagem mental dessas cartas!',
+            type: 'tip',
+          });
+        } else if (moves > 0 && moves % 10 === 0) {
+          addFeedbackMessage({
+            text: 'Continue focado! Cada tentativa fortalece sua memória.',
+            type: 'encouragement',
+          });
+        }
+        
         const timeoutId = setTimeout(() => {
           set({
             revealedCardIds: [],
@@ -219,6 +260,7 @@ const createGameStore = (
             moves: moves + 1,
             isChecking: false,
             checkTimeoutId: null,
+            failedPairs: newFailedPairs,
           });
         }, MISMATCH_DISPLAY_DURATION);
 
@@ -244,6 +286,18 @@ const createGameStore = (
     const { elapsedSeconds } = get();
     set({ elapsedSeconds: elapsedSeconds + 1 });
   },
+  addFeedbackMessage: (message: Omit<FeedbackMessage, 'id' | 'timestamp'>) => {
+    const { feedbackMessages } = get();
+    const newMessage: FeedbackMessage = {
+      ...message,
+      id: `msg-${Date.now()}-${Math.random()}`,
+      timestamp: Date.now(),
+    };
+    
+    // Keep only the last 3 messages
+    const updatedMessages = [...feedbackMessages, newMessage].slice(-3);
+    set({ feedbackMessages: updatedMessages });
+  },
   reset: () => {
     // Resets game state while generating a fresh shuffled deck.
     // This allows players to retry the level with a new card layout.
@@ -263,6 +317,8 @@ const createGameStore = (
       isChecking: false,
       checkTimeoutId: null,
       timerStarted: false,
+      failedPairs: new Map(),
+      feedbackMessages: [],
       status: 'countdown',
     });
   },
